@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 interface TimeLeft {
+  days: number;
   hours: number;
   minutes: number;
   seconds: number;
@@ -13,51 +14,70 @@ interface CountdownProps {
 }
 
 export default function Countdown({ onComplete }: CountdownProps) {
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>({ hours: 0, minutes: 0, seconds: 2 });
+  // Initialize with zeroes to prevent server/client hydration mismatches
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isComplete, setIsComplete] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true); // Ensures the component only renders the timer on the client side
+
+    // Target Date: March 30, 2026 at 00:00:03 IST
+    // The +05:30 ensures it calculates based on Indian Standard Time, regardless of where the user is located.
+    const targetDate = new Date('2026-03-30T00:00:03+05:30').getTime();
+
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        let { hours, minutes, seconds } = prev;
-        
-        if (seconds > 0) {
-          seconds -= 1;
-        } else if (minutes > 0) {
-          minutes -= 1;
-          seconds = 59;
-        } else if (hours > 0) {
-          hours -= 1;
-          minutes = 59;
-          seconds = 59;
-        } else {
-          clearInterval(timer);
+      const now = new Date().getTime();
+      const difference = targetDate - now;
+
+      if (difference <= 0) {
+        clearInterval(timer);
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        if (!isComplete) {
           setIsComplete(true);
           onComplete?.();
-          return prev;
         }
-        return { hours, minutes, seconds };
-      });
+      } else {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((difference % (1000 * 60)) / 1000),
+        });
+      }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [onComplete]);
+  }, [isComplete, onComplete]);
 
   const pad = (num: number) => String(num).padStart(2, '0');
+
+  // Prevent hydration mismatch by not rendering the numbers until mounted
+  if (!isMounted) return null;
 
   return (
     <div className="w-full min-h-screen bg-[#fff0f3] flex items-center justify-center p-4">
       {/* Main Card */}
-      <div className="bg-white rounded-[2rem] shadow-sm p-8 sm:p-12 max-w-2xl w-full border border-pink-50">
+      <div className="bg-white rounded-[2rem] shadow-sm p-8 sm:p-12 max-w-4xl w-full border border-pink-50">
         
         {/* Header with Sparkles/Hearts */}
         <h1 className="text-center text-xl sm:text-2xl md:text-3xl font-bold text-[#642b42] mb-8 flex items-center justify-center gap-2">
-          ✨💕 <span className="whitespace-nowrap">Countdown for Birthday</span> 💕✨
+          ✨💕 <span className="whitespace-nowrap">Countdown for Suhu's Birthday</span> 💕✨
         </h1>
 
         {/* Timer Container */}
-        <div className="flex items-center justify-center gap-2 sm:gap-4 md:gap-6 mb-8">
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 md:gap-6 mb-8">
           
+          {/* Days */}
+          <div className="flex flex-col items-center">
+            <div className="w-16 h-16 sm:w-24 sm:h-24 md:w-28 md:h-28 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-pink-50 flex items-center justify-center">
+              <span className="text-2xl sm:text-4xl md:text-5xl font-bold text-[#b03060]">{pad(timeLeft.days)}</span>
+            </div>
+            <p className="text-pink-300 text-[10px] sm:text-xs mt-3 uppercase tracking-wider font-medium">Days</p>
+          </div>
+
+          <span className="text-pink-200 text-2xl mb-6 sm:mb-8 font-bold hidden sm:block">:</span>
+
           {/* Hours */}
           <div className="flex flex-col items-center">
             <div className="w-16 h-16 sm:w-24 sm:h-24 md:w-28 md:h-28 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-pink-50 flex items-center justify-center">
