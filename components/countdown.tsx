@@ -20,7 +20,7 @@ export default function Countdown({ onComplete }: CountdownProps) {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true); 
+    setIsMounted(true); // Ensures the component only renders the timer on the client side
 
     // Target Date: March 30, 2026 at 00:00:03 IST
     const targetDate = new Date('2026-03-30T00:00:03+05:30').getTime();
@@ -51,19 +51,22 @@ export default function Countdown({ onComplete }: CountdownProps) {
 
   const pad = (num: number) => String(num).padStart(2, '0');
 
+  // Prevent hydration mismatch by not rendering the numbers until mounted
   if (!isMounted) return null;
 
   return (
     <div className="w-full min-h-screen bg-[#fff0f3] flex items-center justify-center p-4">
-      {/* Main Card - Reduced mobile padding slightly to give the row more room */}
+      {/* Main Card */}
       <div className="bg-white rounded-[2rem] shadow-sm p-4 sm:p-12 max-w-4xl w-full border border-pink-50">
         
         {/* Header with Sparkles/Hearts */}
         <h1 className="text-center text-xl sm:text-2xl md:text-3xl font-bold text-[#642b42] mb-8 flex items-center justify-center gap-2">
-          ✨💕 <span className="whitespace-nowrap">Countdown for Suhu's Birthday</span> 💕✨
+          <span className="shrink-0">✨💕</span>
+          <span>Countdown for Suhu's Birthday</span>
+          <span className="shrink-0">💕✨</span>
         </h1>
 
-        {/* Timer Container - Changed to flex-nowrap and tightened mobile gap */}
+        {/* Timer Container */}
         <div className="flex flex-nowrap items-center justify-center gap-1 sm:gap-4 md:gap-6 mb-8 w-full">
           
           {/* Days */}
